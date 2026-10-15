@@ -29,7 +29,7 @@ python3 extras/devices/tests/verify-location-settings.py
 
 This stage requires no Swift, camera service, UI module or core build changes.
 
-# Embedded image camera and settings
+# Embedded camera and settings
 
 `make core SIMRUN_DEVICES=1` builds and bundles the optional Objective-C client
 and Swift host dylib. Default `make core` does not build/load this module or link
@@ -37,12 +37,11 @@ Swift/ScreenCaptureKit. The loader tolerates an absent module. SimRun owns one
 Device Settings window (`Cmd+,`), service and privacy identity; no second App is
 needed. Starting the service does not present its settings window.
 
-This stage supports explicit `image` sources only. `screen` returns an explicit
-unsupported-source error; no placeholder or fallback frame is generated. Supply
+Sources are explicit `image` or `screen`; no placeholder or fallback frame is generated. Supply
 an existing image yourself; private images and App packages are not distributed:
 
 ```sh
-bash extras/devices/run-probe.sh /absolute/real-image.png image-demo
+SIMRUN_CAMERA_FILE=/absolute/image-camera.json bash extras/devices/run-probe.sh image-demo
 python3 extras/devices/tests/verify-standalone.py --image /absolute/real-image.png
 python3 extras/devices/tests/verify-permissions.py
 python3 extras/devices/tests/verify-camera-restarts.py \
@@ -68,3 +67,27 @@ The AVFoundation adapter derives from CAMouflage (MIT). Preserve
 `third-party/CAMouflage-LICENSE`, `third-party/NOTICE.md` and source attribution.
 The module builds with Apple SDK frameworks without a sibling checkout,
 SwiftPM or SimBridgeKit. No VideoToolbox compatibility interposer is included.
+
+# Screen-follow capture
+
+The screen source requires macOS 15+, a visible SimRun device window, and the
+normal macOS Screen Recording grant for SimRun itself. Device Settings offers
+the permission request and System Settings link. Granting host permission does
+not override simulated App camera denial. After an interrupted session, reopen
+the camera explicitly in the test App.
+
+```sh
+bash extras/devices/run-probe.sh screen-demo
+```
+
+This explicit demo initializes missing shared location settings and selects
+`examples/camera-screen.json`. It does not overwrite an existing location file.
+Use `SIMRUN_LOCATION_FILE` / `SIMRUN_CAMERA_FILE` to choose independent fixtures.
+
+The source consumes the host-owned viewport geometry described in
+[window-geometry.md](../../docs/window-geometry.md), follows movement and resize,
+and excludes SimRun's own windows to avoid recursive preview. It crops at the
+host display's native pixel density without resampling to Simulator Retina
+size. Missing/hidden geometry, permission denial and unavailable/blank capture
+interrupt delivery and clear cached photos. Image input is an explicit choice,
+not a fallback. Only the optional host dylib links ScreenCaptureKit.

@@ -24,7 +24,7 @@ struct CameraProviderError: LocalizedError {
 }
 
 struct CameraSource {
-    enum Kind { case image }
+    enum Kind { case screen, image }
     let kind: Kind
     let path: String?
     let encodedData: String?
@@ -32,9 +32,9 @@ struct CameraSource {
     init(json: [String: Any]) throws {
         guard let name = json["kind"] as? String else { throw CameraProviderError("source.kind is required") }
         switch name {
-        case "screen": throw CameraProviderError("Screen source is unsupported in this build; use image")
+        case "screen": kind = .screen
         case "image": kind = .image
-        default: throw CameraProviderError("Unsupported camera source '\(name)'; supported: image")
+        default: throw CameraProviderError("Unsupported camera source '\(name)'; supported: screen, image")
         }
         path = json["path"] as? String
         encodedData = json["dataBase64"] as? String
@@ -69,6 +69,7 @@ struct CameraDevice {
 
 func makeFrameProducer(for source: CameraSource, screenSize: CGSize?, clientPID: pid_t) throws -> FrameProducer {
     switch source.kind {
+    case .screen: return ScreenFrameProducer(size: screenSize, clientPID: clientPID)
     case .image: return try ImageFrameProducer(source: source)
     }
 }
