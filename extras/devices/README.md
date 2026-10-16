@@ -43,6 +43,8 @@ an existing image yourself; private images and App packages are not distributed:
 ```sh
 SIMRUN_CAMERA_FILE=/absolute/image-camera.json bash extras/devices/run-probe.sh image-demo
 python3 extras/devices/tests/verify-standalone.py --image /absolute/real-image.png
+python3 extras/devices/tests/verify-camera-formats.py --image /absolute/first.png \
+  --replacement /absolute/second.png --output /absolute/evidence-directory
 python3 extras/devices/tests/verify-permissions.py
 python3 extras/devices/tests/verify-camera-restarts.py \
   --camera-config /absolute/image-camera.json \
