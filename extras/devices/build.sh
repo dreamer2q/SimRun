@@ -12,7 +12,7 @@ bash "$repo/extras/devices/build-location.sh"
 cp "$repo/extras/devices/tests/Info.plist" "$out/DeviceProbe.app/Info.plist"
 "${cc[@]}" "$repo/extras/devices/tests/main.m" -framework UIKit -framework CoreLocation -framework AVFoundation -framework CoreMedia -framework CoreVideo -framework CoreImage -framework ImageIO -o "$out/DeviceProbe.app/DeviceProbe"
 xcrun --sdk macosx swiftc -swift-version 5 -target arm64-apple-macos15.0 -O -emit-library -parse-as-library -module-name SimRunDevicesHost "$repo/extras/devices/host/"*.swift \
-  -framework AppKit -framework CoreImage -framework CoreMedia -framework CoreVideo -framework ImageIO \
+  -framework AppKit -framework ScreenCaptureKit -framework CoreImage -framework CoreMedia -framework CoreVideo -framework ImageIO \
   -o "$out/SimRunDevicesHost.dylib"
 cp "$repo/extras/devices/third-party/CAMouflage-LICENSE" "$repo/extras/devices/third-party/NOTICE.md" "$out/"
 codesign --force --sign - "$out/SimRunLocation.dylib" "$out/SimRunDevices.dylib" "$out/DeviceProbe.app" "$out/SimRunDevicesHost.dylib"

@@ -41,6 +41,17 @@ final class CameraSocketServer {
         }
     }
 
+    init() {
+        ScreenCaptureSource.shared.onUnavailable = { [weak self] error in
+            self?.ioQueue.async { [weak self] in
+                guard let self else { return }
+                for id in Array(self.sessions.keys) {
+                    if self.sessions[id]?.producer is ScreenFrameProducer { self.interrupt(id, reason: error) }
+                }
+            }
+        }
+    }
+
     func start() throws {
         try ioQueue.sync {
             guard listeners.isEmpty else { return }
