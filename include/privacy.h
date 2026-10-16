@@ -9,6 +9,8 @@
 //                           SimRun), and the reply comes once it is answered. Requests made while one is asking get
 //                           its answer.
 // status is one of the SRPV_* below. Any request may instead get {error: string}.
+// "photo-status" + service (kTCCServicePhotos/PhotosAdd) + pid -> {status}: the active App's
+// saved simulated photo permission. Used by assetsd; never queries the Mac's photo library.
 //
 // For testing what an app does without them, SimRun can pretend: SIMRUND_PERMISSIONS=microphone:denied,audio-capture:
 // authorized (read when SimRun starts) answers those services with that status, and never asks macOS.

@@ -27,6 +27,8 @@ extern long tcc_authorization_record_get_authorization_right(id record);
 extern const char *tcc_service_get_name(id service);
 extern void tcc_message_options_set_request_prompt_policy(id options, int policy);
 extern void tcc_message_options_set_reply_handler_policy(id options, int policy);
+extern uint64_t tcc_authorization_preflight(id service);
+extern void tcc_authorization_request(id service, const void *options, void (^reply)(uint64_t));
 
 // ---------- the services we answer
 #define MAX_SERVICES 16
@@ -81,7 +83,8 @@ static NSString *decisions_path(void) {
 static BOOL app_allowed(const SRTCCService *s) {
   NSString *p = decisions_path();
   NSDictionary *d = p ? [NSDictionary dictionaryWithContentsOfFile:p] : nil;
-  return [d isKindOfClass:NSDictionary.class] && [d[@(s->service)] isEqual:@"allowed"];
+  return [d isKindOfClass:NSDictionary.class] && ([d[@(s->service)] isEqual:@"allowed"] ||
+    (!strcmp(s->service, "kTCCServicePhotosAdd") && [d[@"kTCCServicePhotos"] isEqual:@"allowed"]));
 }
 static void remember_allowed(const SRTCCService *s) {
   NSString *p = decisions_path();
@@ -184,14 +187,37 @@ static long my_tcc_authorization_record_get_authorization_right(id record) {
   return tcc_authorization_record_get_authorization_right(record);
 }
 
+static const SRTCCService *authorization_service(id service) {
+  return SRModuleOn(SRModuleTCC) && [service isKindOfClass:NSString.class] ? service_named([service UTF8String]) : NULL;
+}
+static uint64_t my_tcc_authorization_preflight(id service) {
+  const SRTCCService *s = authorization_service(service);
+  return s ? current_right(s) : tcc_authorization_preflight(service);
+}
+static void my_tcc_authorization_request(id service, const void *options, void (^reply)(uint64_t)) {
+  const SRTCCService *s = reply ? authorization_service(service) : NULL;
+  if (!s) { tcc_authorization_request(service, options, reply); return; }
+  if (current_right(s) == SRTCCAllowed) { reply(SRTCCAllowed); return; }
+  request_right(s, NO, ^(SRTCCRight right) { reply(right); });
+}
+
 __attribute__((used, section("__DATA,__interpose"))) static struct { const void *n, *o; } interposers[] = {
   { (const void *)my_tcc_server_message_request_authorization, (const void *)tcc_server_message_request_authorization },
   { (const void *)my_tcc_authorization_record_get_authorization_right, (const void *)tcc_authorization_record_get_authorization_right },
   { (const void *)my_tcc_message_options_set_request_prompt_policy, (const void *)tcc_message_options_set_request_prompt_policy },
   { (const void *)my_tcc_message_options_set_reply_handler_policy, (const void *)tcc_message_options_set_reply_handler_policy },
+  { (const void *)my_tcc_authorization_preflight, (const void *)tcc_authorization_preflight },
+  { (const void *)my_tcc_authorization_request, (const void *)tcc_authorization_request },
 };
 
 void SRTCCStart(void) {
   gVerbose = getenv("TCC_VERBOSE") != NULL;
   for (int r = 0; r < 3; r++) gRecords[r] = [NSObject new];
+  const char *photosEnabled = getenv("SIMRUN_PHOTO_LIBRARY");
+  if (photosEnabled && !strcmp(photosEnabled, "1") && !SRIsWatch()) {
+    static const SRTCCService photos = { "kTCCServicePhotos", "NSPhotoLibraryUsageDescription", NULL, NULL };
+    static const SRTCCService add = { "kTCCServicePhotosAdd", "NSPhotoLibraryAddUsageDescription", NULL, NULL };
+    SRTCCRegister(&photos);
+    SRTCCRegister(&add);
+  }
 }
