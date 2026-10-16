@@ -33,9 +33,9 @@ static NSMutableArray<CMFCaptureDevice *> *gDevices;
 static NSMutableDictionary<NSString *, CMFCaptureDevice *> *gDevicesById;
 static NSMapTable<NSNumber *, AVCaptureSession *> *gSessionsById;
 static uint32_t gNextSessionId = 0;
-static BOOL gDevicesReceived = NO;
-static dispatch_group_t gDevicesGroup;
+static BOOL gResumeAfterDiscovery;
 static dispatch_queue_t gStateQueue;
+static NSMutableArray *gDeviceListWaiters;
 
 // Pending photo captures, keyed by requestId. Guarded by gStateQueue. Delegate
 // callbacks are replayed on gPhotoQueue, mirroring AVFoundation's off-main
@@ -101,6 +101,7 @@ static AVCaptureDevicePosition cmf_position_from_string(NSString *position) {
 }
 
 static void cmf_update_devices(NSArray *wireDevices) {
+    NSMutableArray *updates = [NSMutableArray array];
     dispatch_sync(gStateQueue, ^{
         NSMutableArray *devices = [NSMutableArray array];
         for (NSDictionary *entry in wireDevices) {
@@ -115,14 +116,17 @@ static void cmf_update_devices(NSArray *wireDevices) {
                 gDevicesById[uniqueID] = device;
             }
             [devices addObject:device];
+            [updates addObject:@{@"device": device, @"entry": entry}];
         }
         [gDevices setArray:devices];
     });
-    NSLog(@"CAMouflage: device list updated (%lu devices)", (unsigned long)wireDevices.count);
-    if (!gDevicesReceived) {
-        gDevicesReceived = YES;
-        dispatch_group_leave(gDevicesGroup);
+    // KVO may call back into discovery. Never notify under the registry queue.
+    for (NSDictionary *update in updates) {
+        NSDictionary *entry = update[@"entry"];
+        [update[@"device"] updateFrameWidth:[entry[@"frameWidth"] intValue]
+                                    height:[entry[@"frameHeight"] intValue] frameRate:[entry[@"fps"] doubleValue]];
     }
+    NSLog(@"CAMouflage: device list updated (%lu devices)", (unsigned long)wireDevices.count);
 }
 
 // Send physical pixel bounds only when both dimensions are finite positive
@@ -169,6 +173,11 @@ static void cmf_route_frame(uint32_t sessionId, CMSampleBufferRef sampleBuffer) 
     if (!CMFAuthorizationAllowsCapture()) return;
     uint64_t generation = CMFAuthorizationGeneration();
     if (![objc_getAssociatedObject(session, kCMFRunningKey) boolValue]) return;
+    CVPixelBufferRef sourceBuffer = CMSampleBufferGetImageBuffer(sampleBuffer);
+    if (sourceBuffer) {
+        [cmf_session_shim_device(session) updateFrameWidth:(int32_t)CVPixelBufferGetWidth(sourceBuffer)
+                                                  height:(int32_t)CVPixelBufferGetHeight(sourceBuffer)];
+    }
 
     // Preview and revocation clear run on the same queue. Recheck at execution
     // time so a frame queued before revoke cannot repaint after the clear.
@@ -257,7 +266,14 @@ static void cmf_handle_message(NSDictionary *msg) {
     if ([type isEqualToString:@"didListDevices"] || [type isEqualToString:@"devicesChanged"]) {
         cmf_update_devices(msg[@"devices"] ?: @[]);
         if ([type isEqualToString:@"didListDevices"]) {
-            cmf_resume_running_sessions();
+            __block BOOL resume;
+            dispatch_sync(gStateQueue, ^{
+                for (dispatch_group_t waiter in gDeviceListWaiters) dispatch_group_leave(waiter);
+                [gDeviceListWaiters removeAllObjects];
+                resume = gResumeAfterDiscovery;
+                gResumeAfterDiscovery = NO;
+            });
+            if (resume) cmf_resume_running_sessions();
         }
         return;
     }
@@ -321,6 +337,7 @@ static void cmf_ensure_connection_open(void) {
                 __block NSDictionary *configuration;
                 dispatch_sync(gStateQueue, ^{
                     configuration = gClientMockConfiguration;
+                    gResumeAfterDiscovery = YES;
                 });
                 if (configuration) {
                     CMFConnectionSend(@{
@@ -344,8 +361,19 @@ static void cmf_ensure_connection_open(void) {
 // answer from a populated registry.
 static void cmf_ensure_devices(void) {
     cmf_ensure_connection_open();
-    if (gDevicesReceived) return;
-    dispatch_group_wait(gDevicesGroup, dispatch_time(DISPATCH_TIME_NOW, 2 * NSEC_PER_SEC));
+    // Screen geometry may not exist during process startup, or may have changed
+    // since discovery. Refresh it before the client calculates its render size.
+    dispatch_group_t waiter = dispatch_group_create();
+    dispatch_group_enter(waiter);
+    dispatch_sync(gStateQueue, ^{ [gDeviceListWaiters addObject:waiter]; });
+    CMFConnectionSend(@{@"type": @"listDevices"});
+    dispatch_group_wait(waiter, dispatch_time(DISPATCH_TIME_NOW, 2 * NSEC_PER_SEC));
+    dispatch_sync(gStateQueue, ^{
+        if ([gDeviceListWaiters containsObject:waiter]) {
+            [gDeviceListWaiters removeObject:waiter];
+            dispatch_group_leave(waiter);
+        }
+    });
 }
 
 #pragma mark - Swizzle Helpers
@@ -1019,9 +1047,8 @@ void CAMouflageClearMockConfiguration(void) {
     gDevices = [NSMutableArray array];
     gDevicesById = [NSMutableDictionary dictionary];
     gSessionsById = [NSMapTable strongToWeakObjectsMapTable];
-    gDevicesGroup = dispatch_group_create();
-    dispatch_group_enter(gDevicesGroup);
     gStateQueue = dispatch_queue_create("camouflage.state", DISPATCH_QUEUE_SERIAL);
+    gDeviceListWaiters = [NSMutableArray array];
     gPhotoRequests = [NSMutableDictionary dictionary];
     gPhotoQueue = dispatch_queue_create("camouflage.photo", DISPATCH_QUEUE_SERIAL);
 

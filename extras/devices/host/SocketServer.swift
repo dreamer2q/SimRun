@@ -201,6 +201,29 @@ final class CameraSocketServer {
         return value.isFinite && value > 0 && value <= max && value.rounded(.towardZero) == value ? value : nil
     }
 
+    private func wireDevices() -> [[String: Any]] {
+        devices.map { device in
+            var wire = device.wire
+            var size: CGSize?
+            let fps: Int
+            switch device.source.kind {
+            case .image:
+                let producer = try? makeFrameProducer(for: device.source, screenSize: nil, clientPID: controlPID)
+                if let frame = producer?.nextFrame() { size = CGSize(width: Int(frame.width), height: Int(frame.height)) }
+                fps = producer?.fps ?? 0
+                producer?.stop()
+            case .screen:
+                size = ScreenCaptureSource.frameSize(clientPID: controlPID)
+                fps = 15
+            }
+            if let size {
+                wire["frameWidth"] = Int(size.width); wire["frameHeight"] = Int(size.height)
+            }
+            wire["fps"] = fps
+            return wire
+        }
+    }
+
     private func handle(_ message: [String: Any]) {
         guard let type = message["type"] as? String else { disconnect(); return }
         if type == "hello" {
@@ -214,7 +237,7 @@ final class CameraSocketServer {
         }
         guard helloReceived else { disconnect(); return }
         switch type {
-        case "listDevices": send(["type":"didListDevices", "devices":devices.map(\.wire)])
+        case "listDevices": send(["type":"didListDevices", "devices":wireDevices()])
         case "setMockConfiguration":
             do {
                 let next = try CameraDevice.configuration(message["configuration"])
@@ -234,7 +257,7 @@ final class CameraSocketServer {
                     } catch { interrupt(id, reason: error.localizedDescription) }
                 }
                 send(["type":"didSetMockConfiguration", "ok":true])
-                send(["type":"devicesChanged", "devices":devices.map(\.wire)])
+                send(["type":"devicesChanged", "devices":wireDevices()])
             } catch { send(["type":"didSetMockConfiguration", "ok":false, "error":error.localizedDescription]) }
         case "clearMockConfiguration":
             for id in Array(sessions.keys) { interrupt(id, reason: "Camera configuration cleared") }

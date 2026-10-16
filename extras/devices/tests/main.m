@@ -17,6 +17,7 @@
 @property BOOL monotonic;
 @property OSType outputPixelFormat;
 - (NSDictionary *)probeState;
+- (NSArray *)cameraFormats;
 @end
 @implementation DeviceProbeVC
 - (void)viewDidLoad {
@@ -56,6 +57,19 @@
   self.result[@"cameraRunning"] = @(self.session.isRunning);
   self.result[@"cameraAuthorization"] = @([AVCaptureDevice authorizationStatusForMediaType:AVMediaTypeVideo]);
   return self.result.copy;
+}
+- (NSArray *)cameraFormats {
+  NSMutableArray *states = [NSMutableArray array];
+  for (AVCaptureDevice *device in [AVCaptureDevice devicesWithMediaType:AVMediaTypeVideo]) {
+    AVCaptureDeviceFormat *format = device.activeFormat;
+    CMVideoDimensions dims = format ? CMVideoFormatDescriptionGetDimensions(format.formatDescription) : (CMVideoDimensions){0,0};
+    AVFrameRateRange *range = format.videoSupportedFrameRateRanges.firstObject;
+    [states addObject:@{@"id":device.uniqueID, @"width":@(dims.width), @"height":@(dims.height),
+      @"formatCount":@(device.formats.count), @"activeListed":@(format && [device.formats containsObject:format]),
+      @"identityStable":@(format && format == device.activeFormat), @"fps":@(range.maxFrameRate),
+      @"duration":@(CMTimeGetSeconds(range.minFrameDuration)), @"sRGB":@([format.supportedColorSpaces containsObject:@(AVCaptureColorSpace_sRGB)])}];
+  }
+  return states;
 }
 - (void)requestFix { [self.manager requestWhenInUseAuthorization]; [self.manager requestLocation]; }
 - (void)startFix { [self.manager requestWhenInUseAuthorization]; [self.manager startUpdatingLocation]; }

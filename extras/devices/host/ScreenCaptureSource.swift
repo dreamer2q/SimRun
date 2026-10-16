@@ -39,6 +39,7 @@ final class ScreenCaptureSource: NSObject, ObservableObject {
         let windowID: UInt32
         let displayID: UInt32
         let rect: CGRect
+        let scale: CGFloat
     }
     private struct CapturePlan {
         let configuration: SCStreamConfiguration
@@ -49,6 +50,10 @@ final class ScreenCaptureSource: NSObject, ObservableObject {
 
     private func geometry() -> WindowGeometry? {
         guard let pid = consumers.values.first else { return nil }
+        return Self.geometry(clientPID: pid)
+    }
+
+    private static func geometry(clientPID pid: pid_t) -> WindowGeometry? {
         let path = FileManager.default.homeDirectoryForCurrentUser
             .appendingPathComponent("Library/Caches/SimRun/window-geometry/\(pid).json")
         guard let attributes = try? FileManager.default.attributesOfItem(atPath: path.path),
@@ -61,12 +66,23 @@ final class ScreenCaptureSource: NSObject, ObservableObject {
               let host = json["hostPid"] as? pid_t, host > 0, kill(host, 0) == 0,
               let window = json["windowID"] as? UInt32,
               let display = json["displayID"] as? UInt32,
+              let scale = json["backingScale"] as? Double, scale.isFinite, scale > 0,
               let rect = json["screenRect"] as? [String: Double],
               let x = rect["x"], let y = rect["y"], let w = rect["width"], let h = rect["height"],
               [x,y,w,h].allSatisfy({ $0.isFinite }), w > 0, h > 0, w <= 8192, h <= 8192
         else { return nil }
         return WindowGeometry(appPID: pid, hostPID: host, windowID: window, displayID: display,
-                              rect: CGRect(x: x, y: y, width: w, height: h))
+                              rect: CGRect(x: x, y: y, width: w, height: h), scale: scale)
+    }
+
+    /// Read the same authoritative viewport used by capture, without starting
+    /// ScreenCaptureKit or inventing a camera size when no window is available.
+    static func frameSize(clientPID: pid_t) -> CGSize? {
+        guard let geometry = geometry(clientPID: clientPID) else { return nil }
+        let size = CGSize(width: floor(geometry.rect.width * geometry.scale / 2) * 2,
+                          height: floor(geometry.rect.height * geometry.scale / 2) * 2)
+        guard size.width >= 2, size.height >= 2, size.width <= 8192, size.height <= 8192 else { return nil }
+        return size
     }
 
     func acquire(clientPID: pid_t?) -> UUID {
