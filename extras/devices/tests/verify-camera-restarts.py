@@ -4,7 +4,7 @@
 Run after other provider clients have stopped: this provider accepts one client.
 Only this script's DeviceProbe profile is launched/stopped. It does not change
 host privacy grants, provider settings, or any pre-existing application instance.
-Use an explicit real-image configuration; screen capture is unsupported here.
+Use an explicit real-image configuration, or --visible with an authorized screen source.
 """
 import argparse
 from collections import Counter
