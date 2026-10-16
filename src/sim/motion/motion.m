@@ -164,6 +164,8 @@ static BOOL device_pose(double t, SRQuat *pose, double *lidRate) {
       rate = (gLid.angle[i] - gLid.angle[i - 1]) / (gLid.t[i] - gLid.t[i - 1]);
       angle = gLid.angle[i - 1] + rate * (at - gLid.t[i - 1]);
     }
+    // With the Mac closed on an external display, its lid is no longer the virtual screen.
+    if (angle < 5 * M_PI / 180) { angle = M_PI / 2; rate = 0; }
   }
   double a = M_PI - angle;
   *pose = (SRQuat){ cos(a / 2), sin(a / 2), 0, 0 };
