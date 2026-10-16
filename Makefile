@@ -143,7 +143,9 @@ ifeq ($(SIMRUN_DEVICES),1)
 	@cp extras/devices/examples/*.json $(BUILD)/.SimRun.app.new/Contents/Resources/devices/
 endif
 	@$(SIGN) --deep $(BUILD)/.SimRun.app.new
+ifneq ($(HOST_SIGNING_IDENTITY),-)
 	@codesign --force --sign "$(HOST_SIGNING_IDENTITY)" --timestamp=none $(BUILD)/.SimRun.app.new
+endif
 	@if [ -d $@ ]; then mv $@ $(BUILD)/.SimRun.app.old; fi
 	@mv $(BUILD)/.SimRun.app.new $@ && rm -rf $(BUILD)/.SimRun.app.old
 	@echo "built $@"

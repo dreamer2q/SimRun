@@ -43,6 +43,8 @@ an existing image yourself; private images and App packages are not distributed:
 ```sh
 SIMRUN_CAMERA_FILE=/absolute/image-camera.json bash extras/devices/run-probe.sh image-demo
 python3 extras/devices/tests/verify-standalone.py --image /absolute/real-image.png
+python3 extras/devices/tests/verify-camera-formats.py --image /absolute/first.png \
+  --replacement /absolute/second.png --output /absolute/evidence-directory
 python3 extras/devices/tests/verify-permissions.py
 python3 extras/devices/tests/verify-camera-restarts.py \
   --camera-config /absolute/image-camera.json \
@@ -91,24 +93,3 @@ host display's native pixel density without resampling to Simulator Retina
 size. Missing/hidden geometry, permission denial and unavailable/blank capture
 interrupt delivery and clear cached photos. Image input is an explicit choice,
 not a fallback. Only the optional host dylib links ScreenCaptureKit.
-
-# Camera format metadata
-
-The provider advertises native source dimensions and frame rate before capture.
-Image dimensions come from the decoded source; screen dimensions come from the
-visible viewport's authoritative geometry. Discovery refreshes that geometry,
-and arriving frames refresh the device format after resize. An unavailable
-viewport has no format until geometry becomes available; there is no fabricated
-1920×1080 fallback. `formats`, `activeFormat`, its CoreMedia format description,
-color space and frame-rate range describe the one native source format.
-The description uses unrotated sensor dimensions; applying the default portrait
-connection's 90-degree rotation recovers the delivered pixel dimensions.
-Changing capture orientation or negotiating a resampled size is not implemented.
-Applications can select the advertised format; changing the source changes its
-native format. Metadata, source replacement and frame agreement can be checked
-with two different-sized existing screenshots:
-
-```sh
-python3 extras/devices/tests/verify-camera-formats.py --image /absolute/first.png \
-  --replacement /absolute/second.png --output /absolute/evidence-directory
-```
