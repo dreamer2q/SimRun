@@ -8,6 +8,8 @@
 /// dealloc paths must never run on their zeroed superclass ivars.
 @interface CMFCaptureDevice : AVCaptureDevice
 @property(nonatomic, readonly) NSString *shimUniqueID;
+- (void)updateFrameWidth:(int32_t)width height:(int32_t)height frameRate:(double)fps;
+- (void)updateFrameWidth:(int32_t)width height:(int32_t)height;
 + (instancetype)deviceWithUniqueID:(NSString *)uniqueID
                               name:(NSString *)name
                           position:(AVCaptureDevicePosition)position;
