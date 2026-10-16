@@ -32,13 +32,13 @@ HDRS    := $(wildcard include/*.h)
 
 APP   := $(BUILD)/SimRun.app
 CORE  := $(APP) $(BIN)/simrun
-SIMLIBS := $(LIB)/xpcservices.dylib $(LIB)/app.dylib $(LIB)/SimFramebuffer
+SIMLIBS := $(LIB)/xpcservices.dylib $(LIB)/app.dylib $(LIB)/SimFramebuffer $(LIB)/photos.dylib
 WATCHLIB := $(LIB)/watchos
 WATCHLIBS := $(WATCHLIB)/simns $(WATCHLIB)/xpcservices.dylib $(WATCHLIB)/app.dylib $(WATCHLIB)/SimFramebuffer
 PARTS := $(BIN)/simrund $(BIN)/simrun $(BIN)/simns $(SIMLIBS) $(WATCHLIBS)
 TOOLS := $(BIN)/hostinput
 TEST_APPS  := $(APPS)/Hello.app $(APPS)/SUI.app $(APPS)/HIDTest.app $(APPS)/Glass.app $(APPS)/DragTest.app $(APPS)/WebTest.app $(APPS)/BGDownload.app $(APPS)/PickerTest.app $(APPS)/Showcase.app $(APPS)/AudioPlayer.app \
-              $(APPS)/WatchTest.app
+              $(APPS)/WatchTest.app $(APPS)/PhotoTest.app
 TEST_PROGS := $(TBIN)/nettest $(TBIN)/nwtest $(TBIN)/pbtest $(TBIN)/kctest $(TBIN)/loctest $(TBIN)/mpstest $(TBIN)/audiotest $(TBIN)/motiontest
 
 .PHONY: all core tools test-apps test-programs tests install clean $(APP)
@@ -147,6 +147,10 @@ $(LIB)/xpcservices.dylib: src/sim/xpcservices/xpcservices.m $(COMMON_DEPS) $(HDR
 	$(SIMLIB) -dynamiclib $< $(COMMON) -framework Foundation -o $@
 	@$(SIGN) $@ 2>/dev/null
 
+$(LIB)/photos.dylib: src/sim/photos/photos.m src/sim/tcc/tcc.tbd $(COMMON_DEPS) $(HDRS) | $(LIB)
+	$(SIMLIB) -dynamiclib $< $(COMMON) src/sim/tcc/tcc.tbd -framework Foundation -o $@
+	@$(SIGN) $@ 2>/dev/null
+
 $(LIB)/SimFramebuffer: src/sim/simfb/simfb.m $(HDRS) | $(LIB)
 	$(SIMCC) -dynamiclib $< -framework Foundation -framework IOSurface -framework CoreFoundation -framework CoreGraphics -framework Metal \
 	  -install_name @rpath/SimFramebuffer.framework/SimFramebuffer -o $@
@@ -219,6 +223,11 @@ $(APPS)/WebTest.app: tests/apps/webtest/main.m tests/apps/webtest/Info.plist | $
 $(APPS)/PickerTest.app: tests/apps/pickertest/main.m tests/apps/pickertest/Info.plist | $(APPS)
 	@mkdir -p $@ && cp tests/apps/pickertest/Info.plist $@/
 	$(SIMCC) $< -framework UIKit -framework UniformTypeIdentifiers -o $@/PickerTest
+	@$(SIGN) $@ 2>/dev/null
+
+$(APPS)/PhotoTest.app: tests/apps/phototest/main.m tests/apps/phototest/Info.plist $(COMMON_DEPS) $(HDRS) | $(APPS)
+	@mkdir -p $@ && cp tests/apps/phototest/Info.plist $@/
+	$(SIMLIB) $< $(COMMON) -framework UIKit -framework Photos -framework ImageIO -framework CoreGraphics -o $@/PhotoTest
 	@$(SIGN) $@ 2>/dev/null
 
 # BGDownload: a background URLSession download. Like Xcode's simulator builds, its entitlements (application-identifier,

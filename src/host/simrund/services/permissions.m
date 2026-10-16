@@ -76,6 +76,21 @@ static NSString *AudioCaptureStatus(void) {
     xpc_object_t reply = xpc_dictionary_create_reply(m);
     if (!reply) return;
     const char *op = xpc_dictionary_get_string(m, "op"), *service = xpc_dictionary_get_string(m, "service");
+    if (op && !strcmp(op, "photo-status") && service &&
+        (!strcmp(service, "kTCCServicePhotos") || !strcmp(service, "kTCCServicePhotosAdd"))) {
+      pid_t pid = (pid_t)xpc_dictionary_get_int64(m, "pid");
+      NSString *s = @(service);
+      dispatch_async(dispatch_get_main_queue(), ^{
+        NSString *home = self.photoContainerForPID ? self.photoContainerForPID(pid) : nil;
+        NSDictionary *rights = home ? [NSDictionary dictionaryWithContentsOfFile:
+          [home stringByAppendingPathComponent:@"Library/SimRun/Permissions.plist"]] : nil;
+        BOOL allowed = [rights[s] isEqual:@"allowed"] ||
+          ([s isEqual:@"kTCCServicePhotosAdd"] && [rights[@"kTCCServicePhotos"] isEqual:@"allowed"]);
+        xpc_dictionary_set_string(reply, "status", allowed ? SRPV_AUTHORIZED : SRPV_DENIED);
+        xpc_connection_send_message(peer, reply);
+      });
+      return;
+    }
     BOOL known = service && (!strcmp(service, SRPV_MICROPHONE) || !strcmp(service, SRPV_AUDIO_CAPTURE));
     if (!op || !known || (strcmp(op, "status") && strcmp(op, "request"))) {
       xpc_dictionary_set_string(reply, "error", known ? "unknown op" : "unknown service");

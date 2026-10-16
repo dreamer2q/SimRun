@@ -480,6 +480,8 @@ static BOOL ProcessGone(pid_t pid) {
   NSString *simns = [SREnvironment simnsPathForPlatform:[SRRuntime runtimeAtRoot:root].platform ?: SRPlatformIOS];
   NSMutableDictionary *vars = [[SREnvironment simulatorVariablesForRoot:root] mutableCopy];
   vars[@"SIMNS_HOST_SLOT"] = @"0";
+  if ([[SRRuntime runtimeAtRoot:root].platform isEqualToString:SRPlatformIOS])
+    vars[@"SIMNS_PHOTOS_MODULE"] = [[SREnvironment libraryDirectoryForPlatform:SRPlatformIOS] stringByAppendingPathComponent:@"photos.dylib"];
   NSMutableArray *env = [NSMutableArray array];
   for (NSString *kv in [SREnvironment environment:[SREnvironment processEnvironment] withOverrides:vars])
     if (![kv hasPrefix:@"DYLD_INSERT_LIBRARIES="]) [env addObject:kv];
@@ -541,7 +543,17 @@ static BOOL ProcessGone(pid_t pid) {
       _docPickerPort = [_docPicker start];
     }
     if (_docPickerPort) [self registerName:SRDP_SERVICE port:_docPickerPort in:ns]; else LOG(@"host document picker service failed to start");
-    if (!_privacy) { _privacy = [SRPrivacyHost new]; _privacyPort = [_privacy start]; }
+    if (!_privacy) {
+      _privacy = [SRPrivacyHost new];
+      __weak SRServer *weakSelf = self;
+      _privacy.photoContainerForPID = ^NSString *(pid_t pid) {
+        SRServer *s = weakSelf;
+        if (s) for (SRRequest *r in s->_active) if (r.session.pid == pid && [r.env containsObject:@"SIMRUN_PHOTO_LIBRARY=1"])
+          return [SREnvironment containerPathForIdentifier:[SREnvironment containerIdentifierForExecutable:r.argv.firstObject] profile:r.profile];
+        return nil;
+      };
+      _privacyPort = [_privacy start];
+    }
     if (_privacyPort) [self registerName:SRPV_SERVICE port:_privacyPort in:ns]; else LOG(@"host privacy service failed to start");
     if (!_motion) { _motion = [SRMotionHost new]; _motionPort = [_motion start]; }
     if (_motionPort) [self registerName:SRMO_SERVICE port:_motionPort in:ns]; else LOG(@"host motion service failed to start");

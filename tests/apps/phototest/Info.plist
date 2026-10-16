@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CFBundleIdentifier</key>
+	<string>dev.cyan.phototest</string>
+	<key>CFBundleExecutable</key>
+	<string>PhotoTest</string>
+	<key>CFBundleName</key>
+	<string>PhotoTest</string>
+	<key>CFBundlePackageType</key>
+	<string>APPL</string>
+	<key>CFBundleShortVersionString</key>
+	<string>1.0</string>
+	<key>CFBundleVersion</key>
+	<string>1</string>
+	<key>MinimumOSVersion</key>
+	<string>17.0</string>
+	<key>CFBundleSupportedPlatforms</key>
+	<array>
+		<string>iPhoneSimulator</string>
+	</array>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Read test photos in the simulator library.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>Add a test photo to the simulator library.</string>
+</dict>
+</plist>

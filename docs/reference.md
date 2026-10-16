@@ -34,6 +34,7 @@ them in Launch With….
 | `SIMRUN_WATCH_RUNTIME_ROOT=<…/RuntimeRoot>` | The watchOS runtime watch apps run on unless they have their own, instead of the newest installed ([watchos.md](watchos.md)) |
 | `SIMRUN_DEVICE=<identifier or name>` | The device type apps run as unless they have their own (Launch With…, `simrun run --device`), e.g. `"iPhone SE (3rd generation)"`, when their runtime supports it; else the runtime's default ([architecture.md](architecture.md#devices)). `simrun devices` lists them |
 | `SIMRUN_DATA=dir` | Shared data directory (default `~/Library/Developer/SimRun/data`) |
+| `SIMRUN_PHOTO_LIBRARY=1` | Allow iOS Apps to request PhotoKit access to the simulator's `assetsd` library at `SIMRUN_DATA/Media`. Requests with App usage descriptions are granted and saved per App/profile. Keeps the App's own picker and never reads the Mac's Photos library. Use separate data directories for different runtime versions. |
 | `SIMNS_QUIET=1` | Hide simns's log (in SimRun's log, `simrun log`) of every service lookup (`OK` / `MISSING`) — leave it on to see what an app needs |
 | `SIMNS_DAEMONS=a,b` / `none` | Labels of real sim daemons simns may launch on demand |
 | `SIMAPP_EXTRA_INSERT=x.dylib` | Inject an extra sim dylib into apps launched from the launcher (`simrun run --insert` for one launch) |
@@ -91,7 +92,6 @@ select all) go to the app while one of its windows is key.
 - watchOS apps: no text input (Quickboard), no clock in the status bar, no side button, and no paired iPhone
   (WatchConnectivity) ([watchos.md](watchos.md#not-supported)).
 - No secure paste (`UIPasteControl`) or pasteboard pattern detection ([pasteboard.md](pasteboard.md)).
-- No LaunchServices: UTType knows only the built-in core types.
 - Drag & drop only within an app ([dragdrop.md](dragdrop.md)).
 - Document pickers show the Mac's file system, not file providers; `UIDocumentBrowserViewController` isn't covered
   ([docpicker.md](docpicker.md)).

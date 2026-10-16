@@ -132,7 +132,8 @@ static char *gRoot;
 static int allowed(const char *label) {
   const char *list = getenv("SIMNS_DAEMONS");
   if (!list) list = "com.apple.notifyd,com.apple.trustd,com.apple.securityd,com.apple.cfprefsd.xpc.daemon,com.apple.cfprefsd.xpc.agent,"
-                    "com.apple.containermanagerd,com.apple.nsurlsessiond,com.apple.geod,com.apple.audio.systemsoundserver-simd";
+                    "com.apple.containermanagerd,com.apple.nsurlsessiond,com.apple.geod,com.apple.audio.systemsoundserver-simd,"
+                    "com.apple.assetsd,com.apple.lsd,com.apple.containermanagerd.system";
   if (!strcmp(list, "none")) return 0;
   size_t n = strlen(label);
   for (const char *p = list; (p = strstr(p, label)); p += n)
@@ -236,10 +237,16 @@ static void ensure_daemon(const char *name) {
     pthread_mutex_unlock(&gLock);
     int nb = 0; while (gChildEnv[nb]) nb++;
     int ne = 0; while (d->env[ne]) ne++;
-    char **env = calloc(nb + ne + 2, sizeof(char *)); int k = 0;
+    char **env = calloc(nb + ne + 3, sizeof(char *)); int k = 0;
     for (int i = 0; i < nb; i++) env[k++] = gChildEnv[i];
     for (int i = 0; i < ne; i++) env[k++] = d->env[i];
     char svc[300]; snprintf(svc, sizeof svc, "XPC_SERVICE_NAME=%s", d->label); env[k++] = svc;
+    char *photo_insert = NULL;
+    const char *photo_module = getenv("SIMNS_PHOTOS_MODULE");
+    if (!strcmp(d->label, "com.apple.assetsd") && photo_module && photo_module[0] == '/' && !access(photo_module, R_OK)) {
+      asprintf(&photo_insert, "DYLD_INSERT_LIBRARIES=%s", photo_module);
+      env[k++] = photo_insert;
+    }
     posix_spawnattr_t attr; posix_spawnattr_init(&attr);
     posix_spawnattr_setspecialport_np(&attr, gNS, TASK_BOOTSTRAP_PORT);
     posix_spawnattr_setflags(&attr, POSIX_SPAWN_CLOEXEC_DEFAULT);   // stdio only (not our log)
@@ -247,6 +254,7 @@ static void ensure_daemon(const char *name) {
     for (int i = 0; i < 3; i++) posix_spawn_file_actions_addinherit_np(&fa, i);
     int r = posix_spawn(&d->pid, d->argv[0], &fa, &attr, d->argv, env);
     posix_spawn_file_actions_destroy(&fa); posix_spawnattr_destroy(&attr); free(env);
+    free(photo_insert);
     if (r) { L("spawn daemon %s failed: %s", d->label, strerror(r)); d->pid = 0; }
     else L("launched %s (pid %d) for %s", d->label, d->pid, name);
   }

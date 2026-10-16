@@ -5,6 +5,8 @@
 #include <mach/mach.h>
 
 @interface SRPrivacyHost : NSObject
+// Called on main; only an active, opted-in App may expose its simulated photo rights.
+@property (copy) NSString *(^photoContainerForPID)(pid_t pid);
 // Starts the sim2host listener. Returns a send right to its port (register it in simns as SRPV_SERVICE), or 0.
 - (mach_port_t)start;
 @end
