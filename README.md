@@ -72,6 +72,20 @@ make
 This builds `build/SimRun.app`. You can rebuild while SimRun is open; quit and reopen SimRun to pick up the new
 version. Until you do, apps in the old SimRun can't open the Mac's file panels (document pickers).
 
+Local builds use ad-hoc signing by default, so macOS privacy permissions can become invalid when the binary
+changes. To retain permissions across rebuilds, list valid certificates with
+`security find-identity -v -p codesigning`. Save the chosen SHA-1 in the git-ignored `.simrun.local.mk` at the
+repository root:
+
+```make
+HOST_SIGNING_IDENTITY := YOUR_CERTIFICATE_SHA1
+```
+
+Subsequent builds sign the host bundle with that certificate and fail if it is unavailable; Simulator payloads
+keep their development signing. The setting survives `make clean`. Switching from ad-hoc signing requires a
+one-time permission grant for the certificate-signed app; keep its bundle identifier and app path stable.
+This is local development signing, separate from the Developer ID release/notarization workflow.
+
 To also build the sample apps into `build/apps/`, including Showcase, a tour of what SimRun can do:
 
 ```bash
