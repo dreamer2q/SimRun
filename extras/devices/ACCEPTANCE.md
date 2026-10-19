@@ -36,3 +36,20 @@ Intel hosts, mixed-scale/negative-coordinate displays and private capture APIs
 outside the replaced AVFoundation/CoreLocation surface. Static synthetic-image
 controls and cache state tests do not accept real screen capture. A working
 decoder does not establish visible video rendering.
+
+Screen tests are separate from image/permission tests:
+
+```sh
+python3 extras/devices/tests/verify-screen-frame-state.py --image /absolute/real-image.png
+python3 extras/devices/tests/verify-screen-host-denial.py --expect-host-denied
+```
+
+The first covers the same-source cache state machine without exercising TCC or
+SCStream. The second requires the host grant to already be denied; it does not
+change System Settings and accepts interruption/zero frames/no cached photo,
+not successful capture. Earlier full-module runs passed 14 cache-state, 4 host-
+denial and 5 actual screen stop/recovery checks. These screen runtime checks
+are not rerun during split compilation. Actual visible desktop capture should
+use distinguishable user-provided content, then verify movement, resize,
+minimize/restore, permission loss and recovery on the target host. Multi-display
+and mixed-scale arrangements remain a separate acceptance matrix.

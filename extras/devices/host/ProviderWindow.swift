@@ -1,5 +1,6 @@
 // In-process optional device service and settings window for the SimRun host.
 import AppKit
+import Combine
 
 private final class ProviderDocumentView: NSView {
     override var isFlipped: Bool { true }
@@ -11,7 +12,8 @@ final class ProviderWindow: NSObject {
     private var started = false
     private var location: LocationSettingsView?
     private let connection = NSTextField(wrappingLabelWithString:"Starting camera provider")
-    private let capture = NSTextField(wrappingLabelWithString:"Image sources only; screen capture is unsupported in this build")
+    private let capture = NSTextField(wrappingLabelWithString:"No screen capture requested")
+    private var observations = Set<AnyCancellable>()
 
     override init() {
         super.init()
@@ -19,6 +21,9 @@ final class ProviderWindow: NSObject {
             guard let self, self.started else { return }
             self.connection.stringValue = status
         }
+        ScreenCaptureSource.shared.$status.receive(on:DispatchQueue.main).sink { [weak self] in
+            self?.capture.stringValue = $0
+        }.store(in:&observations)
     }
 
     /// No window, prompt or menu is created by starting the optional service.
@@ -64,12 +69,14 @@ final class ProviderWindow: NSObject {
         let title = NSTextField(labelWithString:"Simulated camera")
         title.font = NSFont.boldSystemFont(ofSize:18)
         stack.addArrangedSubview(title); stack.addArrangedSubview(connection); stack.addArrangedSubview(capture)
-        let explanation = NSTextField(wrappingLabelWithString:"Virtual camera authorization belongs to the test App. Configure an explicit image source. Screen capture is unsupported in this build; no host Screen Recording permission is requested. Reopen the camera after changing an interrupted session.")
+        let explanation = NSTextField(wrappingLabelWithString:"Virtual camera authorization belongs to the test App. macOS Screen Recording permission is separate. The default source follows the SimRun device window and excludes SimRun itself. After granting host permission, reopen the camera in the test App; this panel cannot restart an interrupted App session.")
         explanation.font = NSFont.systemFont(ofSize:11); explanation.textColor = .secondaryLabelColor
         stack.addArrangedSubview(explanation)
         for label in [connection, capture, explanation] {
             label.widthAnchor.constraint(equalTo:stack.widthAnchor).isActive = true
         }
+        stack.addArrangedSubview(NSButton(title:"Request screen permission / refresh source",target:self,action:#selector(retryCapture)))
+        stack.addArrangedSubview(NSButton(title:"Open Screen Recording Settings",target:self,action:#selector(openScreenSettings)))
         let separator = NSBox(); separator.boxType = .separator
         stack.addArrangedSubview(separator)
         separator.widthAnchor.constraint(equalTo:stack.widthAnchor).isActive = true
@@ -97,7 +104,14 @@ final class ProviderWindow: NSObject {
         ])
         window.center()
     }
-
+    @objc private func retryCapture() {
+        ScreenCaptureSource.shared.requestPermission()
+    }
+    @objc private func openScreenSettings() {
+        if let url = URL(string:"x-apple.systempreferences:com.apple.preference.security?Privacy_ScreenCapture") {
+            NSWorkspace.shared.open(url)
+        }
+    }
 }
 
 // Accessed exclusively on main. The host retains this dylib until process exit;

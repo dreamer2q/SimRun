@@ -11,8 +11,8 @@ FOUNDATION_EXPORT BOOL CAMouflageIsProviderConnected(void);
 ///     {"devices":[{"id":"image-back","position":"back",
 ///       "source":{"kind":"image","path":"/absolute/image.png"}}]}
 ///
-/// This build supports image sources with an absolute path or dataBase64.
-/// screen is explicitly unsupported; no default/menu source is selected.
+/// Sources are image (absolute path or dataBase64) and screen (the visible
+/// requesting SimRun viewport). No default/menu source is selected.
 /// The configuration is not persisted, is resent after service reconnect,
 /// and is discarded at process exit or CAMouflageClearMockConfiguration().
 /// Returns NO for invalid JSON. A disconnected service queues valid JSON and
