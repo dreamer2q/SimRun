@@ -1,0 +1,504 @@
+{
+  "schema": 1,
+  "date": "2026-10-19",
+  "forkBase": "3a9fb48",
+  "environment": {
+    "architecture": "arm64",
+    "xcode": "26.2",
+    "simulatorRuntime": "26.2"
+  },
+  "builds": {
+    "defaultCore": "passed",
+    "devicesEnabledCore": "passed",
+    "deepStrictSignatureBoth": "passed",
+    "buildOnlyCompatibility": "Xcode 26 simulator compilation used the macOS SDK AudioHardwareBase header via a local build/compat include. No SDK header is committed."
+  },
+  "currentRuntimeGroups": [
+    {
+      "name": "location-live-native-actions",
+      "passed": true,
+      "checks": [
+        {
+          "name": "location starts undetermined",
+          "passed": true
+        },
+        {
+          "name": "settings denial updates idle App through delegate",
+          "passed": true
+        },
+        {
+          "name": "settings always authorization updates idle App",
+          "passed": true
+        },
+        {
+          "name": "location services off reaches idle App",
+          "passed": true
+        },
+        {
+          "name": "Shanghai one-shot returns configured WGS84 and accuracy",
+          "passed": true
+        },
+        {
+          "name": "active App follows edited coordinates",
+          "passed": true
+        },
+        {
+          "name": "editing coordinates does not restart stopped updates",
+          "passed": true
+        },
+        {
+          "name": "denied request returns no fix or cached location",
+          "passed": true
+        },
+        {
+          "name": "explicit restore returns Shanghai again",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "name": "location-invalid-native-actions",
+      "passed": true,
+      "checks": [
+        {
+          "name": "invalid initial disabled/denied/no cache",
+          "passed": true
+        },
+        {
+          "name": "invalid request cannot emit native fix",
+          "passed": true
+        },
+        {
+          "name": "invalid repaired file recovers through watcher",
+          "passed": true
+        },
+        {
+          "name": "invalid dynamic invalid disables and clears exposed cache",
+          "passed": true
+        },
+        {
+          "name": "invalid second recovery preserves PID",
+          "passed": true
+        },
+        {
+          "name": "missing initial disabled/denied/no cache",
+          "passed": true
+        },
+        {
+          "name": "missing request cannot emit native fix",
+          "passed": true
+        },
+        {
+          "name": "missing repaired file recovers through watcher",
+          "passed": true
+        },
+        {
+          "name": "missing dynamic invalid disables and clears exposed cache",
+          "passed": true
+        },
+        {
+          "name": "missing second recovery preserves PID",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "name": "permissions",
+      "passed": true,
+      "checks": [
+        {
+          "name": "permission API present",
+          "passed": true
+        },
+        {
+          "name": "status authorized",
+          "passed": true
+        },
+        {
+          "name": "status denied",
+          "passed": true
+        },
+        {
+          "name": "status notDetermined",
+          "passed": true
+        },
+        {
+          "name": "status restricted",
+          "passed": true
+        },
+        {
+          "name": "invalid permission leaves state unchanged",
+          "passed": true
+        },
+        {
+          "name": "invalid request policy rejected",
+          "passed": true
+        },
+        {
+          "name": "missing permission defaults authorized",
+          "passed": true
+        },
+        {
+          "name": "undetermined request denial async",
+          "passed": true
+        },
+        {
+          "name": "permission request callback is reentrant",
+          "passed": true
+        },
+        {
+          "name": "undetermined request grants authorization",
+          "passed": true
+        },
+        {
+          "name": "restricted cannot request itself authorized",
+          "passed": true
+        },
+        {
+          "name": "restricted session stays stopped",
+          "passed": true
+        },
+        {
+          "name": "restricted photo fails once",
+          "passed": true
+        },
+        {
+          "name": "denied session stays stopped",
+          "passed": true
+        },
+        {
+          "name": "denied photo fails once",
+          "passed": true
+        },
+        {
+          "name": "undetermined photo fails once",
+          "passed": true
+        },
+        {
+          "name": "no duplicate photo completions",
+          "passed": true
+        },
+        {
+          "name": "denied initialization does not connect provider",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "name": "real-image-camera",
+      "passed": true,
+      "checks": [
+        {
+          "name": "location starts undetermined",
+          "passed": true
+        },
+        {
+          "name": "single coordinate and authorization",
+          "passed": true
+        },
+        {
+          "name": "one-shot does not repeat",
+          "passed": true
+        },
+        {
+          "name": "continuous fixes use new coordinate and timestamp",
+          "passed": true
+        },
+        {
+          "name": "stop location cancels callbacks",
+          "passed": true
+        },
+        {
+          "name": "denied location emits no fix or cached coordinate",
+          "passed": true
+        },
+        {
+          "name": "location restores",
+          "passed": true
+        },
+        {
+          "name": "camera receives screenshot dimensions",
+          "passed": true
+        },
+        {
+          "name": "video-range NV12, color and propagated EXIF",
+          "passed": true
+        },
+        {
+          "name": "virtual exposure reset completes",
+          "passed": true
+        },
+        {
+          "name": "11-photo-1 has one processing and completion",
+          "passed": true
+        },
+        {
+          "name": "11-photo-1 dimensions and real screenshot pixels",
+          "passed": true
+        },
+        {
+          "name": "11-photo-2 has one processing and completion",
+          "passed": true
+        },
+        {
+          "name": "11-photo-2 dimensions and real screenshot pixels",
+          "passed": true
+        },
+        {
+          "name": "stop camera ends frame delivery",
+          "passed": true
+        },
+        {
+          "name": "Use NV12 full range frame format and metadata",
+          "passed": true
+        },
+        {
+          "name": "Use BGRA frame format and metadata",
+          "passed": true
+        },
+        {
+          "name": "camera permission configuration denied",
+          "passed": true
+        },
+        {
+          "name": "revoked camera stops frame delivery",
+          "passed": true
+        },
+        {
+          "name": "revoked photo fails once without cached image",
+          "passed": true
+        },
+        {
+          "name": "camera permission configuration authorized",
+          "passed": true
+        },
+        {
+          "name": "camera resumes after explicit restore and reopen",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "name": "camera-format-metadata",
+      "passed": true,
+      "checks": [
+        {
+          "name": "source 0: both cameras have stable, listed native format before capture",
+          "passed": true
+        },
+        {
+          "name": "source 0: portrait connection dimensions match delivered frames",
+          "passed": true
+        },
+        {
+          "name": "source 0: discovery does not restart a running camera",
+          "passed": true
+        },
+        {
+          "name": "source 1: both cameras have stable, listed native format before capture",
+          "passed": true
+        },
+        {
+          "name": "source 1: portrait connection dimensions match delivered frames",
+          "passed": true
+        },
+        {
+          "name": "source 1: discovery does not restart a running camera",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "name": "screen-cache-state",
+      "passed": true,
+      "checks": [
+        {
+          "name": "real image is encoded",
+          "passed": true
+        },
+        {
+          "name": "idle keeps unchanged desktop frame",
+          "passed": true
+        },
+        {
+          "name": "blank interrupts",
+          "passed": true
+        },
+        {
+          "name": "blank cannot return an old photo",
+          "passed": true
+        },
+        {
+          "name": "blank invalidates old stream",
+          "passed": true
+        },
+        {
+          "name": "suspended interrupts",
+          "passed": true
+        },
+        {
+          "name": "suspended cannot return an old photo",
+          "passed": true
+        },
+        {
+          "name": "suspended invalidates old stream",
+          "passed": true
+        },
+        {
+          "name": "stopped interrupts",
+          "passed": true
+        },
+        {
+          "name": "stopped cannot return an old photo",
+          "passed": true
+        },
+        {
+          "name": "stopped invalidates old stream",
+          "passed": true
+        },
+        {
+          "name": "stale stream status cannot revoke current frame",
+          "passed": true
+        },
+        {
+          "name": "valid first/complete frame accepted",
+          "passed": true
+        },
+        {
+          "name": "valid first/complete frame accepted",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "name": "objc-exceptions",
+      "passed": true,
+      "checks": [
+        {
+          "name": "bound_probe_identity",
+          "passed": true
+        },
+        {
+          "name": "native_exception_catchable_in_js",
+          "passed": true
+        },
+        {
+          "name": "uncaught_native_exception_cli_exit_1",
+          "passed": true
+        },
+        {
+          "name": "same_pid_alive_after_both_errors",
+          "passed": true
+        },
+        {
+          "name": "subsequent_legal_invocation",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "name": "native-keyboard-focus-and-bound-typing",
+      "passed": true,
+      "checks": [
+        {
+          "name": "wrapper owns field0",
+          "passed": true
+        },
+        {
+          "name": "same wrapper different input token",
+          "passed": true
+        },
+        {
+          "name": "ordinary input direct owner",
+          "passed": true
+        },
+        {
+          "name": "unmapped input has no AX owner",
+          "passed": true
+        },
+        {
+          "name": "no input has no AX focus",
+          "passed": true
+        },
+        {
+          "name": "living input token stable",
+          "passed": true
+        },
+        {
+          "name": "bound insertion mode 0",
+          "passed": true
+        },
+        {
+          "name": "bound insertion mode 1",
+          "passed": true
+        },
+        {
+          "name": "bound insertion mode 2",
+          "passed": true
+        },
+        {
+          "name": "bound insertion mode 3",
+          "passed": true
+        },
+        {
+          "name": "bound insertion mode 4",
+          "passed": true
+        },
+        {
+          "name": "stale token no insertion",
+          "passed": true
+        },
+        {
+          "name": "invalid token no insertion",
+          "passed": true
+        },
+        {
+          "name": "composed Unicode insertion",
+          "passed": true
+        },
+        {
+          "name": "legacy typing unchanged",
+          "passed": true
+        }
+      ]
+    }
+  ],
+  "identity": {
+    "nativeDarwinAssertions": 208,
+    "exceptionRecoveryCases": 4,
+    "passed": true,
+    "sourceSHA256": "e1215647ee983b6699fcb3d921e41158baa2af9eddd4def72d71fe2b453c3c56"
+  },
+  "historicalMediaAcceptance": {
+    "recorded": "2026-10-16",
+    "productionModuleUnchanged": true,
+    "sameVideoControl": "No mapping: frozen pixels and CompilerError(2); exact mapping: actual pipeline success and changing pixels; disable/recreate: original failure returns",
+    "finalVideo1": {
+      "durationSeconds": 26.8,
+      "renderFPS": 30,
+      "changedPixelFraction": 0.9575
+    },
+    "pauseResume": {
+      "pauseStableSeconds": 6.106,
+      "resumeAdvancedToSeconds": 14.373,
+      "changedPixelFraction": 0.9869
+    },
+    "finalVideo2": {
+      "durationSeconds": 11.166,
+      "renderFPS": 30,
+      "changedPixelFraction": 0.6962
+    },
+    "residual": "Video1 initial display errors: count 6, code -2540, stable in subsequent play and resume samples. Not zero-error or universal video compatibility."
+  },
+  "limits": [
+    "First attempt using the stock AX button locator timed out. Location API/delegate tests were rerun through fixture-owned native action selectors; these checks do not validate AX button selection. The separate AX keyboard ownership and typing fixture passed.",
+    "Current image camera checks use a real caller-provided screenshot; this does not prove live desktop capture. The screen cache state test does not invoke host TCC or an actual SCStream.",
+    "Actual screen movement/cropping and certificate signing evidence remains the separately dated 2026-10-15/16 acceptance, not a fresh 2026-10-19 hardware/privacy acceptance.",
+    "VAP experiment excluded from integration.",
+    "No GitHub CI result is asserted; these are local compilation and scoped runtime fixtures."
+  ],
+  "cleanup": {
+    "allOwnedTestAppsAndHostsStopped": true
+  },
+  "license": "Original MIT and CAMouflage MIT LICENSE/NOTICE preserved. No private app/resource/header/account/raw log/image/media binary is included."
+}

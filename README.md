@@ -236,3 +236,7 @@ SimRun is available under the [MIT License](LICENSE).
 ### Optional device identity view
 
 For unencrypted device Debug builds, [extras/device-identity](extras/device-identity/README.md) provides an explicit, process-local view of selected identity APIs to business callers. It is disabled by default and does not change Simulator runtime or hardware services.
+
+### Fork validation records
+
+Accepted optional device and automation changes are tracked by [issue #5](https://github.com/dreamer2q/SimRun/issues/5). See [the dated integration record](docs/validation/2026-10-19-fork-integration.md) for current checks, historical evidence and remaining limits.
