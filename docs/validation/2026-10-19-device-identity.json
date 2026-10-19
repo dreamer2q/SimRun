@@ -1,0 +1,75 @@
+{
+  "schema": 1,
+  "recorded": "2026-10-19",
+  "environment": {
+    "architecture": "arm64",
+    "xcode": "26.2",
+    "simulatorRuntime": "26.2"
+  },
+  "moduleSourceSHA256": "e1215647ee983b6699fcb3d921e41158baa2af9eddd4def72d71fe2b453c3c56",
+  "sourceMatchesAccepted20261016": true,
+  "nativeDarwinFixtures": [
+    {
+      "name": "disabled",
+      "passed": true,
+      "checks": 39
+    },
+    {
+      "name": "enabled",
+      "passed": true,
+      "checks": 52
+    },
+    {
+      "name": "missing-model",
+      "passed": true,
+      "checks": 39
+    },
+    {
+      "name": "wrong-info",
+      "passed": true,
+      "checks": 39
+    },
+    {
+      "name": "wrong-root",
+      "passed": true,
+      "checks": 39
+    }
+  ],
+  "nativeDarwinCheckCount": 208,
+  "exceptionRecoveryFixtures": [
+    {
+      "name": "mode-1",
+      "passed": true
+    },
+    {
+      "name": "mode-2",
+      "passed": true
+    },
+    {
+      "name": "mode-3",
+      "passed": true
+    },
+    {
+      "name": "mode-4",
+      "passed": true
+    }
+  ],
+  "simulatorModuleCompileAndStrictSignature": true,
+  "historicalPrivateAppAcceptance": {
+    "date": "2026-10-16",
+    "deviceBuildBusinessBranch": "non-simulator branch retained",
+    "businessModel": "iPhone18,1",
+    "search": "visible results and actual TCP status 200",
+    "negativeControl": "same device package without identity module also searched successfully; no attribution of old network failure to this module",
+    "media": "two moving videos, switch, pause and resume passed only with separate explicit shader mapping",
+    "residual": "initial display error count 6 with code -2540, stable during playback and resume"
+  },
+  "remaining": [
+    "raw environ and direct plist/CFBundle reads",
+    "Mach-O platform and dyld images",
+    "filesystem and hardware services/attestation",
+    "reads cached before constructor readiness",
+    "external intermediate callers"
+  ],
+  "publication": "No private App, account data, shader resource, resource mapping or raw log included; repository MIT attribution unchanged"
+}

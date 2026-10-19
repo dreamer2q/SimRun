@@ -232,3 +232,7 @@ The [docs](docs/README.md) explain how SimRun works, how the project is organize
 ## License
 
 SimRun is available under the [MIT License](LICENSE).
+
+### Optional device identity view
+
+For unencrypted device Debug builds, [extras/device-identity](extras/device-identity/README.md) provides an explicit, process-local view of selected identity APIs to business callers. It is disabled by default and does not change Simulator runtime or hardware services.
