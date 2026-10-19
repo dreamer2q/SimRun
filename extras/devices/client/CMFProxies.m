@@ -37,10 +37,66 @@ void CMFImmortalize(id object) {
 
 #pragma mark - CMFCaptureDevice
 
+@interface CMFFrameRateRange : AVFrameRateRange
++ (instancetype)rangeWithRate:(double)fps;
+@end
+@implementation CMFFrameRateRange {
+    double _fps;
+}
++ (instancetype)rangeWithRate:(double)fps {
+    CMFFrameRateRange *range = cmf_nsobject_init([self alloc]);
+    range->_fps = fps;
+    CMFImmortalize(range);
+    return range;
+}
+- (double)minFrameRate { return _fps; }
+- (double)maxFrameRate { return _fps; }
+- (CMTime)minFrameDuration { return CMTimeMakeWithSeconds(1.0 / _fps, 1000000); }
+- (CMTime)maxFrameDuration { return self.minFrameDuration; }
+@end
+
+@interface CMFCaptureDeviceFormat : AVCaptureDeviceFormat
++ (instancetype)formatWithWidth:(int32_t)width height:(int32_t)height frameRate:(double)fps;
+@end
+@implementation CMFCaptureDeviceFormat {
+    CMVideoFormatDescriptionRef _description;
+    AVFrameRateRange *_range;
+}
++ (instancetype)formatWithWidth:(int32_t)width height:(int32_t)height frameRate:(double)fps {
+    CMVideoFormatDescriptionRef description = NULL;
+    if (CMVideoFormatDescriptionCreate(NULL, kCVPixelFormatType_420YpCbCr8BiPlanarFullRange,
+                                      width, height, NULL, &description) != noErr) return nil;
+    CMFCaptureDeviceFormat *format = cmf_nsobject_init([self alloc]);
+    format->_description = description;
+    format->_range = [CMFFrameRateRange rangeWithRate:fps];
+    CMFImmortalize(format);
+    return format;
+}
+- (CMFormatDescriptionRef)formatDescription { return _description; }
+// AVFCapture's photo-settings initializer also queries this backend-only
+// object while enumerating formats. There is no Fig camera source behind the
+// virtual device; never enter the superclass's uninitialized internal storage.
+- (id)figCaptureSourceVideoFormat { return nil; }
+- (AVMediaType)mediaType { return AVMediaTypeVideo; }
+- (NSArray<AVFrameRateRange *> *)videoSupportedFrameRateRanges { return @[_range]; }
+- (NSArray<NSNumber *> *)supportedColorSpaces { return @[@(AVCaptureColorSpace_sRGB)]; }
+- (CMVideoDimensions)highResolutionStillImageDimensions { return CMVideoFormatDescriptionGetDimensions(_description); }
+- (NSArray<NSValue *> *)supportedMaxPhotoDimensions {
+    CMVideoDimensions dims = self.highResolutionStillImageDimensions;
+    return @[[NSValue valueWithBytes:&dims objCType:@encode(CMVideoDimensions)]];
+}
+- (BOOL)isVideoHDRSupported { return NO; }
+- (BOOL)isVideoStabilizationModeSupported:(AVCaptureVideoStabilizationMode)mode { return mode == AVCaptureVideoStabilizationModeOff; }
+- (CGFloat)videoMaxZoomFactor { return 1; }
+- (float)videoFieldOfView { return 0; } // A desktop/image source has no optical field of view.
+@end
+
 @implementation CMFCaptureDevice {
     NSString *_shimUniqueID;
     NSString *_shimName;
     AVCaptureDevicePosition _shimPosition;
+    CMFCaptureDeviceFormat *_shimFormat;
+    double _shimFrameRate;
 }
 
 + (instancetype)deviceWithUniqueID:(NSString *)uniqueID
@@ -71,8 +127,35 @@ void CMFImmortalize(id object) {
 - (BOOL)isConnected { return YES; }
 - (BOOL)isSuspended { return NO; }
 - (BOOL)isVirtualDevice { return NO; }
-- (NSArray *)formats { return @[]; }
-- (AVCaptureDeviceFormat *)activeFormat { return nil; }
+- (NSArray *)formats { @synchronized (self) { return _shimFormat ? @[_shimFormat] : @[]; } }
+- (AVCaptureDeviceFormat *)activeFormat { @synchronized (self) { return _shimFormat; } }
+- (void)setActiveFormat:(AVCaptureDeviceFormat *)format {
+    if (format != self.activeFormat) {
+        [NSException raise:NSInvalidArgumentException format:@"The virtual source has one native format; reconfigure its source to change dimensions"];
+    }
+}
+- (void)updateFrameWidth:(int32_t)width height:(int32_t)height {
+    double fps;
+    @synchronized (self) { fps = _shimFrameRate; }
+    [self updateFrameWidth:width height:height frameRate:fps];
+}
+- (void)updateFrameWidth:(int32_t)width height:(int32_t)height frameRate:(double)fps {
+    // The source delivers portrait-oriented pixels, like the default shim
+    // connection (90 degrees). Advertise the unrotated sensor dimensions so
+    // clients applying that connection's orientation recover the actual frame size.
+    BOOL valid = width >= 2 && height >= 2 && width <= 8192 && height <= 8192 && isfinite(fps) && fps > 0 && fps <= 15;
+    @synchronized (self) {
+        CMVideoDimensions old = _shimFormat ? CMVideoFormatDescriptionGetDimensions(_shimFormat.formatDescription) : (CMVideoDimensions){0, 0};
+        if (valid && old.width == height && old.height == width && _shimFrameRate == fps) return;
+        if (!valid && !_shimFormat) return;
+        [self willChangeValueForKey:@"formats"];
+        [self willChangeValueForKey:@"activeFormat"];
+        _shimFormat = valid ? [CMFCaptureDeviceFormat formatWithWidth:height height:width frameRate:fps] : nil;
+        _shimFrameRate = valid ? fps : 0;
+        [self didChangeValueForKey:@"activeFormat"];
+        [self didChangeValueForKey:@"formats"];
+    }
+}
 - (NSArray *)constituentDevices { return @[]; }
 
 - (BOOL)supportsAVCaptureSessionPreset:(AVCaptureSessionPreset)preset { return YES; }
