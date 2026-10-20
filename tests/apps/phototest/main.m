@@ -1,6 +1,6 @@
 // Run against disposable SIMRUN_DATA. Keeps only its generated/imported image for picker inspection.
 // Build: make core build/apps/PhotoTest.app
-// Run: SIMRUN_PHOTO_LIBRARY=1 build/bin/simrun run --headless -p photo-test build/apps/PhotoTest.app
+// Run (iOS default enabled): build/bin/simrun run --headless -p photo-test build/apps/PhotoTest.app
 // Repeat with --authorized to check persistence. Fresh profiles: --no-request, --add-only;
 // --denied expects SIMRUN_PHOTO_LIBRARY=0 or an App copy without photo usage descriptions.
 #import <UIKit/UIKit.h>
