@@ -740,6 +740,13 @@ static NSSize ScreenSize(NSDictionary<NSString *, NSString *> *env) {
 }
 
 - (void)launch:(SRRequest *)r {
+  // The iOS test library is isolated under SIMRUN_DATA/Media. Normalize the
+  // default into the request so the App TCC adapter and host PID authorization
+  // use the same setting. Any explicit value is preserved (0 disables it).
+  BOOL photoSetting = NO;
+  for (NSString *entry in r.env) if ([entry hasPrefix:@"SIMRUN_PHOTO_LIBRARY="]) { photoSetting = YES; break; }
+  if (!photoSetting && [[SRRuntime runtimeAtRoot:r.runtimeRoot].platform isEqualToString:SRPlatformIOS])
+    r.env = [r.env arrayByAddingObject:@"SIMRUN_PHOTO_LIBRARY=1"];
   // The optional desktop producer lives in this host, not a second macOS App.
   // Start it only when an App explicitly opts in to the virtual camera.
   for (NSString *kv in r.env) {
